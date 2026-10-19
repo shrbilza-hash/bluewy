@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Surat kecil untukmu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Great+Vibes&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --wine: #713b4d;
+      --wine-deep: #512d3b;
+      --beige: #eee3d1;
+      --beige-dark: #cdb99a;
+      --paper: #fbf5e9;
+      --ink: #51434a;
+      --muted: #8e7c82;
+      --matcha: #87916c;
+      --coffee: #987459;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100svh;
+      padding: clamp(18px, 4vw, 48px) clamp(12px, 3vw, 20px);
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 12% 12%, rgba(238,227,209,.9), transparent 34%),
+        radial-gradient(ellipse at 88% 88%, rgba(205,185,154,.34), transparent 32%),
+        #f6f0e6;
+      font-family: "Dancing Script", cursive;
+      font-size: 20px;
+    }
+    .screen { display: none; }
+    .screen.is-active { display: block; }
+    .intro-screen.is-active {
+      display: grid;
+      min-height: calc(100vh - 96px);
+      min-height: calc(100svh - 96px);
+      place-items: center;
+      animation: screen-in .55s ease both;
+    }
+    #letter-screen.is-active { animation: screen-in .5s ease both; }
+    .intro-card {
+      position: relative;
+      width: min(100%, 760px);
+      margin: auto;
+      padding: clamp(36px, 7vw, 68px);
+      overflow: hidden;
+      text-align: center;
+      background: var(--paper);
+      border: 3px double #d8c5a6;
+      border-radius: 5px;
+      box-shadow: 0 22px 65px rgba(87, 52, 65, .12);
+    }
+    .intro-card::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border: 1px solid rgba(205,185,154,.48);
+      pointer-events: none;
+    }
+    .intro-card .topline { padding-right: 98px; text-align: left; }
+    .postage-stamp {
+      position: absolute;
+      top: 27px;
+      right: 34px;
+      z-index: 1;
+      display: flex;
+      width: 76px;
+      height: 84px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      border: 1px dashed var(--wine);
+      background: #f4ead8;
+      color: var(--wine);
+      box-shadow: inset 0 0 0 4px #f4ead8, inset 0 0 0 5px rgba(113,59,77,.38);
+      transform: rotate(8deg);
+    }
+    .stamp-heart { font-size: 23px; line-height: 1; }
+    .stamp-copy {
+      font: 700 7px/1.3 system-ui, sans-serif;
+      letter-spacing: .1em;
+      text-align: center;
+    }
+    .intro-title {
+      margin: 27px 0 10px;
+      color: var(--wine-deep);
+      font-family: "Great Vibes", cursive;
+      font-size: clamp(54px, 9vw, 78px);
+      font-weight: 400;
+      line-height: 1.12;
+    }
+    .intro-subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 22px;
+      line-height: 1.45;
+    }
+    .envelope-zone { margin: 29px auto 8px; }
+    .envelope {
+      position: relative;
+      display: block;
+      width: min(270px, 78vw);
+      height: 180px;
+      margin: auto;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      perspective: 800px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .envelope:focus-visible {
+      outline: 3px solid var(--beige-dark);
+      outline-offset: 8px;
+      border-radius: 10px;
+    }
+    .envelope-back {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      border-radius: 9px;
+      background: #e8dcc8;
+      box-shadow: 0 14px 28px rgba(81,45,59,.14);
+    }
+    .paper-peek {
+      position: absolute;
+      top: 9%;
+      right: 9%;
+      bottom: 14%;
+      left: 9%;
+      z-index: 2;
+      border: 1px solid #efe6d9;
+      background: var(--paper);
+      transition: transform .65s cubic-bezier(.2,.75,.25,1);
+    }
+    .envelope-front {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      border-radius: 9px;
+      background: #d9c8ad;
+      clip-path: polygon(0 0, 50% 57%, 100% 0, 100% 100%, 0 100%);
+    }
+    .envelope-flap {
+      position: absolute;
+      inset: 0 0 auto;
+      z-index: 5;
+      height: 62%;
+      border-radius: 9px 9px 0 0;
+      background: #c9b18e;
+      clip-path: polygon(0 0, 100% 0, 50% 100%);
+      transform-origin: top center;
+      transition: transform .65s ease, z-index .01s .3s;
+    }
+    .envelope.is-open .envelope-flap {
+      z-index: 1;
+      transform: rotateX(180deg);
+    }
+    .envelope.is-open .paper-peek { transform: translateY(-31px); }
+    .envelope-seal {
+      position: absolute;
+      top: 43%;
+      left: 50%;
+      z-index: 6;
+      display: grid;
+      width: 39px;
+      height: 39px;
+      place-items: center;
+      border: 2px solid rgba(255,255,255,.45);
+      border-radius: 50%;
+      background: var(--wine);
+      color: #fff8ed;
+      font: 18px/1 Georgia, serif;
+      transform: translate(-50%, -50%);
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .envelope.is-open .envelope-seal {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(.7);
+    }
+    .envelope-hint {
+      margin: 13px 0 0;
+      color: var(--wine);
+      font: 600 12px/1.5 system-ui, sans-serif;
+      letter-spacing: .04em;
+    }
+    .gate-panel {
+      position: relative;
+      max-width: 420px;
+      margin: 25px auto 0;
+      padding: 20px;
+      border: 1px solid #e8dcc9;
+      border-radius: 14px;
+      background: #faf6ef;
+      text-align: left;
+    }
+    .gate-panel[hidden] { display: none; }
+    .gate-panel:not([hidden]) { animation: gate-in .45s .2s both; }
+    .gate-panel h2 {
+      margin: 0 0 6px;
+      color: var(--wine);
+      font-family: "Great Vibes", cursive;
+      font-size: 34px;
+      font-weight: 400;
+    }
+    .gate-panel p {
+      margin: 0 0 15px;
+      color: var(--muted);
+      font: 19px/1.45 "Dancing Script", cursive;
+    }
+    .name-form { display: flex; gap: 9px; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .name-input {
+      min-width: 0;
+      flex: 1;
+      padding: 11px 12px;
+      border: 1px solid #d9cbb7;
+      border-radius: 8px;
+      background: white;
+      color: var(--ink);
+      font: 14px/1.3 system-ui, sans-serif;
+    }
+    .name-input:focus { outline: 2px solid var(--beige-dark); outline-offset: 1px; }
+    .name-input[aria-invalid="true"] { border-color: var(--wine); }
+    .gate-panel .name-error[hidden] { display: none; }
+    .gate-panel .name-error:not([hidden]) {
+      margin: 10px 0 0;
+      color: var(--wine);
+      font: 600 18px/1.35 "Dancing Script", cursive;
+    }
+    .unlock-button {
+      padding: 11px 14px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--wine);
+      color: white;
+      font: 600 13px/1.3 system-ui, sans-serif;
+      cursor: pointer;
+    }
+    .unlock-button:hover { background: var(--wine-deep); }
+    .screen.is-leaving { animation: screen-out .35s ease both; }
+    .postmark {
+      position: absolute;
+      top: 27px;
+      right: 34px;
+      z-index: 1;
+      display: flex;
+      width: 82px;
+      height: 82px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 2px double rgba(113,59,77,.7);
+      border-radius: 50%;
+      color: var(--wine);
+      opacity: .9;
+      pointer-events: none;
+      transform: rotate(11deg);
+      animation: stamp-in .55s .25s cubic-bezier(.2,.8,.2,1) both;
+    }
+    .postmark::before {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border: 1px dashed rgba(113,59,77,.55);
+      border-radius: 50%;
+    }
+    .postmark-symbol { font-size: 22px; line-height: 1; }
+    .postmark-text {
+      margin-top: 3px;
+      font: 700 7px/1.2 system-ui, sans-serif;
+      letter-spacing: .08em;
+      text-align: center;
+    }
+    @keyframes screen-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes screen-out {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-8px); }
+    }
+    @keyframes gate-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes stamp-in {
+      0% { opacity: 0; transform: rotate(20deg) scale(1.3); }
+      70% { opacity: 1; transform: rotate(8deg) scale(.96); }
+      100% { opacity: .9; transform: rotate(11deg) scale(1); }
+    }
+    .toolbar { max-width: 760px; margin: 0 auto 14px; text-align: right; }
+    .print-button {
+      border: 1px solid #dfd2bf;
+      background: rgba(255,253,249,.8);
+      color: var(--wine);
+      border-radius: 999px;
+      padding: 10px 16px;
+      font: 600 13px/1.2 system-ui, sans-serif;
+      cursor: pointer;
+    }
+    .print-button:hover { background: white; }
+    .letter {
+      position: relative;
+      max-width: 760px;
+      margin: auto;
+      padding: clamp(34px, 7vw, 68px);
+      padding-bottom: 160px;
+      overflow: hidden;
+      background: var(--paper);
+      border: 3px double #d8c5a6;
+      border-radius: 5px;
+      background:
+        radial-gradient(ellipse at 10% 8%, rgba(205,185,154,.13), transparent 38%),
+        repeating-linear-gradient(0deg, rgba(116,85,56,.025) 0 1px, transparent 1px 6px),
+        var(--paper);
+      box-shadow: 0 22px 65px rgba(87, 52, 65, .12);
+    }
+    .letter::before {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border: 1px solid rgba(205,185,154,.48);
+      pointer-events: none;
+    }
+    .letter::after {
+      content: "❧";
+      position: absolute;
+      bottom: 18px;
+      left: 24px;
+      color: var(--beige-dark);
+      font: 30px/1 Georgia, serif;
+      opacity: .85;
+      transform: rotate(-18deg);
+      pointer-events: none;
+    }
+    .topline {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--wine);
+      font: 700 11px/1.4 system-ui, sans-serif;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+    .letter > .topline { padding-right: 112px; }
+    .topline::after { content: ""; height: 1px; flex: 1; background: #e4d7c4; }
+    .heart { margin: 30px 0 12px; color: var(--beige-dark); font-size: 27px; }
+    h1 {
+      margin: 0;
+      color: var(--wine-deep);
+      font-family: "Great Vibes", cursive;
+      font-size: clamp(54px, 9vw, 76px);
+      font-weight: 400;
+      line-height: 1.15;
+    }
+    .subtitle {
+      margin: 15px 0 34px;
+      color: var(--muted);
+      font-size: 21px;
+      line-height: 1.45;
+    }
+    .divider {
+      display: flex;
+      width: min(220px, 100%);
+      align-items: center;
+      gap: 12px;
+      margin: 4px 0 28px;
+      color: var(--beige-dark);
+      text-align: center;
+    }
+    .divider::before, .divider::after {
+      content: "";
+      height: 1px;
+      flex: 1;
+      background: #cdb99a;
+    }
+    .divider span { font: 22px/1 Georgia, serif; }
+    .letter-body {
+      max-width: 570px;
+      font-family: "Dancing Script", cursive;
+      font-size: clamp(20px, 2.2vw, 23px);
+      line-height: 1.65;
+    }
+    .letter-body p { margin: 0 0 19px; }
+    .letter-body p:first-child::first-letter {
+      float: left;
+      margin: 7px 8px 0 0;
+      color: var(--wine);
+      font: 56px/.72 "Great Vibes", cursive;
+    }
+    .palette-note {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin: 28px 0 30px;
+      font: 12px/1.2 system-ui, sans-serif;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 11px;
+      border: 1px solid #ece3d6;
+      border-radius: 999px;
+      background: #fbf7ef;
+      color: #695a5e;
+    }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--wine); }
+    .coffee-tag .dot { background: var(--coffee); }
+    .matcha-tag .dot { background: var(--matcha); }
+    .signoff { margin-top: 30px; color: var(--wine); font-size: 22px; line-height: 1.6; }
+    .signature {
+      display: block;
+      margin-top: 3px;
+      color: var(--wine-deep);
+      font-family: "Great Vibes", cursive;
+      font-size: 40px;
+      line-height: 1.2;
+    }
+    .crescent-moon {
+      display: inline-block;
+      margin-left: 4px;
+      color: var(--beige-dark);
+      font: 25px/1 Georgia, serif;
+      vertical-align: 2px;
+    }
+    .footnote {
+      margin-top: 42px;
+      padding-top: 14px;
+      border-top: 1px solid #eee5d8;
+      color: #a08e92;
+      font: 11px/1.5 system-ui, sans-serif;
+      letter-spacing: .04em;
+    }
+    .dried-flowers {
+      position: absolute;
+      right: 20px;
+      bottom: 13px;
+      width: 132px;
+      height: 138px;
+      opacity: .88;
+      pointer-events: none;
+    }
+    @media (max-width: 520px) {
+      body { padding: 22px 12px; }
+      .intro-screen.is-active {
+        min-height: calc(100vh - 44px);
+        min-height: calc(100svh - 44px);
+      }
+      .intro-card { padding: 38px 28px; }
+      .intro-card .topline { padding-right: 85px; }
+      .postage-stamp { top: 20px; right: 20px; transform: rotate(8deg) scale(.86); transform-origin: top right; }
+      .postmark { top: 20px; right: 20px; transform: rotate(11deg) scale(.84); transform-origin: top right; }
+      .letter > .topline { padding-right: 90px; }
+      .name-form { flex-direction: column; }
+      .unlock-button { width: 100%; }
+      .letter { padding: 38px 28px 122px; }
+      .letter::before { inset: 8px; }
+      .letter-body { font-size: 21px; }
+      .letter::after { left: 15px; bottom: 13px; font-size: 25px; }
+      .dried-flowers { right: 13px; bottom: 9px; width: 104px; height: 108px; }
+    }
+    @media (max-width: 380px) {
+      body { padding: 16px 10px; }
+      .intro-screen.is-active {
+        min-height: calc(100vh - 32px);
+        min-height: calc(100svh - 32px);
+      }
+      .intro-card { padding: 32px 18px; }
+      .intro-card .topline { padding-right: 78px; font-size: 9px; letter-spacing: .14em; }
+      .postage-stamp { top: 17px; right: 16px; transform: rotate(8deg) scale(.75); }
+      .intro-title { font-size: 52px; }
+      .intro-subtitle { font-size: 20px; }
+      .gate-panel { padding: 16px; }
+      .letter { padding: 32px 18px 116px; }
+      .letter > .topline { padding-right: 76px; font-size: 9px; letter-spacing: .14em; }
+      .postmark { top: 17px; right: 15px; transform: rotate(11deg) scale(.75); }
+      h1 { font-size: 52px; }
+      .letter-body { font-size: 20px; }
+      .palette-note { gap: 6px; }
+      .tag { padding: 7px 9px; }
+      .letter::after { left: 12px; bottom: 10px; font-size: 22px; }
+      .dried-flowers { right: 10px; bottom: 8px; width: 92px; height: 96px; }
+    }
+    @media print {
+      @page { size: A4; margin: 14mm; }
+      body { min-height: auto; padding: 0; background: white; }
+      .intro-screen, .toolbar { display: none !important; }
+      #letter-screen.is-active { min-height: 0; }
+      .letter { max-width: none; padding: 18mm 18mm 40mm; box-shadow: none; border: none; }
+      .letter::before { inset: 5mm; }
+      .letter::after { bottom: 5mm; left: 8mm; font-size: 23px; }
+      .dried-flowers { right: 10mm; bottom: 5mm; width: 30mm; height: 32mm; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="screen intro-screen is-active" id="envelope-screen">
+    <div class="intro-card">
+      <div class="topline">Little Effort To You</div>
+      <div class="postage-stamp" aria-hidden="true">
+        <span class="stamp-heart">♥</span>
+        <span class="stamp-copy">KIRIMAN<br>EXPRESS</span>
+      </div>
+      <h1 class="intro-title">Sebuah kertas<br>untukmu.</h1>
+      <p class="intro-subtitle">Ada sesuatu di dalamnya, bukan THR.</p>
+
+      <div class="envelope-zone">
+        <button class="envelope" id="open-envelope" type="button" aria-label="Buka amplop" aria-controls="gate-panel" aria-expanded="false">
+          <span class="envelope-back" aria-hidden="true"></span>
+          <span class="paper-peek" aria-hidden="true"></span>
+          <span class="envelope-front" aria-hidden="true"></span>
+          <span class="envelope-flap" aria-hidden="true"></span>
+          <span class="envelope-seal" aria-hidden="true">♥</span>
+        </button>
+      </div>
+      <p class="envelope-hint" id="envelope-hint">Klik amplop untuk membukanya</p>
+
+      <div class="gate-panel" id="gate-panel" hidden>
+        <h2>Open the Card</h2>
+        <p>Masukkan nomor rekeningmu wkwk identitasmu.</p>
+        <form class="name-form" id="name-form">
+          <label class="sr-only" for="reader-name">Namamu</label>
+          <input class="name-input" id="reader-name" name="reader-name" type="text" autocomplete="off" required>
+          <button class="unlock-button" type="submit">Buka kartu</button>
+        </form>
+        <p class="name-error" id="name-error" role="alert" hidden>Nama belum cocok. Periksa lagi ejaan dan spasinya.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="screen" id="letter-screen">
+    <div class="toolbar">
+      <button class="print-button" onclick="window.print()">Cetak surat</button>
+    </div>
+
+    <main class="letter">
+      <div class="topline">Surat kecil untukmu</div>
+      <div class="postmark" aria-hidden="true">
+        <span class="postmark-symbol">❦</span>
+        <span class="postmark-text">FRIENDSHIP<br>POST</span>
+      </div>
+      <div class="heart" aria-hidden="true">♥</div>
+
+      <h1>Terima kasih,<br><span id="recipient-name">sayang</span>.</h1>
+      <p class="subtitle">Ada hal-hal sederhana yang terasa lebih aduhai dan senang.</p>
+      <div class="divider"><span aria-hidden="true">❦</span></div>
+
+      <section class="letter-body">
+        <p>Terima kasih sudah masuk dalam cuplikan film hidupku dan membuat banyak hal terasa lebih tak terduga. Aku senang kamu mau untuk diajak berbagi cerita, curhat dan hari-hari biasa yang terasa lebih ada isinya karena kamu ada untuk bagi otak.</p>
+    .</p>Terima kasih sudah tahan dengan manusia ini yang pernah mengobrak abrik pemahaman dan emosimu. Aku tahu aku bukan orang yang mudah untuk dimengerti, tapi kamu tetap mau untuk mencoba paham dan sabar dengan manusia ini. Aku sangat menghargai itu, terima kasih sangat dengan semua usahamu.
+        <p>Terima kasih sudah mau berbagi waktu dan tenagamu untukku.</p>
+    .<p>Walaupun tahu seperti apa ya yang sudah berlalu dan itu bisa saja jadi alasan kau untuk tidak mau ada di sini.</p> 
+        <p>Terima kasih sudah mau kenal dengan orang yang aneh, buat darah tinggi, dan segala pemahaman yang berbeda. Eh udah punya pawang belum nih takut e ndak dikira apa kan males nambah masalah.</p>
+    .<p>Ini buat yang tahu saja ya pliisss isin kalau ada yang tahu. Kamu tipe orang yang mendem apa gimana? kemarin yang aku kasih kalimat terima kasih responmu yang bingung jawab gimana, gak tahu ya emang benar  seperti itu atau tidak. Hanya bertanya. Oke </p>
+        <p>Eh bener ya beberapa hal terkait aku gak kau yang sebarin ya bener lho ya? Awas kalau sampek......</p>
+    .<p>✨Terima Kasih banyak BRO Rozan Al-Muqmin🌑</p>
+
+      </section>
+
+      <div class="palette-note" aria-label="Hal-hal yang kamu suka">
+        <span class="tag coffee-tag"><span class="dot"></span>Coffee</span>
+        <span class="tag matcha-tag"><span class="dot"></span>Matcha</span>
+        <span class="tag blue-tag"><span class="dot"></span>Blue</span>
+        <span class="tag moon-tag"><span class="dot"></span>Moon</span>
+      </div>
+
+      <div class="signoff">
+        Regard
+        <span class="signature">Luna <span class="crescent-moon" aria-hidden="true">☾</span></span>
+      </div>
+
+      <div class="footnote">Ditulis dengan setengah waras. Sabi lah ya traktir matcha xixi candyaa.Eh kau suka merah yee?tanya doang. oke ☆*: .｡. o(≧▽≦)o .｡.:*☆</div>
+      <svg class="dried-flowers" viewBox="0 0 140 150" aria-hidden="true">
+        <g fill="none" stroke="#92775e" stroke-width="1.7" stroke-linecap="round">
+          <path d="M39 145C43 116 55 91 77 66S111 37 128 18"/>
+          <path d="M59 145C65 118 66 96 59 75S46 51 42 34"/>
+          <path d="M77 66C96 65 111 57 124 42"/>
+        </g>
+        <g fill="#d8c5a6" stroke="#92775e" stroke-width="1">
+          <path d="M54 111C40 109 34 101 34 92C46 91 57 98 54 111Z"/>
+          <path d="M64 96C76 99 81 108 79 117C68 116 60 107 64 96Z"/>
+          <path d="M62 77C49 73 44 64 47 56C58 58 66 67 62 77Z"/>
+          <path d="M75 69C87 74 91 83 87 91C77 88 71 78 75 69Z"/>
+          <path d="M99 47C96 34 101 25 109 21C114 32 110 44 99 47Z"/>
+          <path d="M102 51C114 43 124 44 130 50C122 59 110 60 102 51Z"/>
+        </g>
+        <g fill="#713b4d">
+          <g transform="translate(128 18)">
+            <ellipse cy="-4.2" rx="2.2" ry="4"/>
+            <ellipse cy="-4.2" rx="2.2" ry="4" transform="rotate(72)"/>
+            <ellipse cy="-4.2" rx="2.2" ry="4" transform="rotate(144)"/>
+            <ellipse cy="-4.2" rx="2.2" ry="4" transform="rotate(216)"/>
+            <ellipse cy="-4.2" rx="2.2" ry="4" transform="rotate(288)"/>
+            <circle r="2.1" fill="#cdb99a"/>
+          </g>
+          <g transform="translate(42 34) scale(.8)">
+            <ellipse cy="-4.2" rx="2.2" ry="4"/>
+            <ellipse cy="-4.2" rx="2.2" ry="4" transform="rotate(72)"/>
+            <ellipse cy="-4.2" rx="2.2" ry="4" transform="rotate(144)"/>
+            <ellipse cy="-4.2" rx="2.2" ry="4" transform="rotate(216)"/>
+            <ellipse cy="-4.2" rx="2.2" ry="4" transform="rotate(288)"/>
+            <circle r="2.1" fill="#cdb99a"/>
+          </g>
+          <g transform="translate(124 42) scale(.72)">
+            <ellipse cy="-4.2" rx="2.2" ry="4"/>
+            <ellipse cy="-4.2" rx="2.2" ry="4" transform="rotate(72)"/>
+            <ellipse cy="-4.2" rx="2.2" ry="4" transform="rotate(144)"/>
+            <ellipse cy="-4.2" rx="2.2" ry="4" transform="rotate(216)"/>
+            <ellipse cy="-4.2" rx="2.2" ry="4" transform="rotate(288)"/>
+            <circle r="2.1" fill="#cdb99a"/>
+          </g>
+        </g>
+        <g transform="translate(78 60)">
+          <path d="M0 18C-13 20-23 11-22-2C-21-15-9-24 3-22C17-21 25-10 22 3C20 14 11 21 0 18Z" fill="#713b4d" stroke="#512d3b" stroke-width="1.5"/>
+          <path d="M-12-5C-10-15 2-19 10-12C17-6 13 4 6 5C0 6-5 1-2-4C1-8 7-6 6-2" fill="none" stroke="#ead9bd" stroke-width="1.7" stroke-linecap="round"/>
+          <path d="M-17 9C-7 17 9 17 17 7" fill="none" stroke="#c99c88" stroke-width="1.3" stroke-linecap="round"/>
+          <path d="M-12 18C-18 18-23 22-23 28C-16 29-11 25-12 18Z" fill="#b9a17d" stroke="#92775e" stroke-width="1"/>
+          <path d="M9 18C15 17 20 20 21 26C14 28 9 24 9 18Z" fill="#d8c5a6" stroke="#92775e" stroke-width="1"/>
+        </g>
+      </svg>
+    </main>
+  </section>
+
+  <script>
+    const envelopeScreen = document.getElementById("envelope-screen");
+    const letterScreen = document.getElementById("letter-screen");
+    const envelopeButton = document.getElementById("open-envelope");
+    const gatePanel = document.getElementById("gate-panel");
+    const nameInput = document.getElementById("reader-name");
+    const nameForm = document.getElementById("name-form");
+    const nameError = document.getElementById("name-error");
+    const recipientName = document.getElementById("recipient-name");
+    const envelopeHint = document.getElementById("envelope-hint");
+
+    envelopeButton.addEventListener("click", () => {
+      if (envelopeButton.classList.contains("is-open")) return;
+      envelopeButton.classList.add("is-open");
+      envelopeButton.setAttribute("aria-expanded", "true");
+      envelopeHint.hidden = true;
+      gatePanel.hidden = false;
+      window.setTimeout(() => nameInput.focus(), 650);
+    });
+
+    nameForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const name = nameInput.value.trim().replace(/\s+/g, " ");
+      const normalizedName = name.toLocaleLowerCase("id-ID");
+      if (normalizedName !== "dzakyrozan noorhafizh") {
+        nameInput.setAttribute("aria-invalid", "true");
+        nameError.hidden = false;
+        nameInput.focus();
+        return;
+      }
+      nameInput.removeAttribute("aria-invalid");
+      nameError.hidden = true;
+      recipientName.textContent = "Dzakyrozan Noorhafizh";
+      envelopeScreen.classList.add("is-leaving");
+      window.setTimeout(() => {
+        envelopeScreen.classList.remove("is-active", "is-leaving");
+        letterScreen.classList.add("is-active");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 350);
+    });
+  </script>
+</body>
+</html>
